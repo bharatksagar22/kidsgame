@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FunKids - Learning Adventure</title>
+    <title>FunKids - Interactive Learning</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -11,18 +11,19 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-15px); }
         }
-        .bounce-animation {
-            animation: bounce 2s infinite;
-        }
+        .bounce-animation { animation: bounce 2s infinite; }
+        
         .game-card:hover {
             transform: scale(1.05);
             transition: transform 0.3s ease;
         }
+        
         .progress-ring__circle {
             transition: stroke-dashoffset 0.5s ease;
             transform: rotate(-90deg);
             transform-origin: 50% 50%;
         }
+        
         .speech-bubble {
             position: relative;
             background: #ffeb3b;
@@ -37,21 +38,20 @@
             border-style: solid;
             border-color: #ffeb3b transparent;
         }
+        
         @keyframes float {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
         }
-        .float-animation {
-            animation: float 3s ease-in-out infinite;
-        }
-        .pulse-animation {
-            animation: pulse 2s infinite;
-        }
+        .float-animation { animation: float 3s ease-in-out infinite; }
+        
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
+        .pulse-animation { animation: pulse 2s infinite; }
+        
         .rainbow-text {
             background: linear-gradient(to right, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
             -webkit-background-clip: text;
@@ -64,18 +64,34 @@
             0% { background-position: 0% 50%; }
             100% { background-position: 100% 50%; }
         }
+        
+        /* Game screen styling */
+        .game-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-b from-blue-50 to-purple-50 min-h-screen font-sans">
-    <!-- Header with Character -->
+    <!-- Header -->
     <header class="bg-gradient-to-r from-purple-500 to-blue-500 p-4 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
             <div class="flex items-center">
-                <img src="https://cdn-icons-png.flaticon.com/512/1864/1864593.png" alt="FunKids Logo" class="h-16 w-16 mr-4 bounce-animation">
+                <img src="https://cdn-icons-png.flaticon.com/512/1864/1864593.png" alt="Logo" class="h-16 w-16 mr-4 bounce-animation">
                 <h1 class="text-3xl font-bold text-white">FunKids <span class="rainbow-text">Adventure</span></h1>
             </div>
             <div class="relative">
-                <div class="speech-bubble px-4 py-2 text-lg font-bold text-purple-900 absolute -top-16 right-0">
+                <div id="characterSpeech" class="speech-bubble px-4 py-2 text-lg font-bold text-purple-900 absolute -top-16 right-0">
                     Hi there! Let's play!
                 </div>
                 <img src="https://cdn-icons-png.flaticon.com/512/145/145852.png" alt="Character" class="h-16 w-16 float-animation">
@@ -83,7 +99,7 @@
         </div>
     </header>
 
-    <!-- Main Dashboard -->
+    <!-- Main Content -->
     <main class="container mx-auto px-4 py-8">
         <!-- Welcome Section -->
         <section class="mb-10 bg-white rounded-3xl p-6 shadow-xl border-4 border-yellow-400 transform hover:rotate-1 transition duration-300">
@@ -91,7 +107,7 @@
                 <div class="md:w-2/3">
                     <h2 class="text-3xl font-bold text-purple-800 mb-2">Welcome Back, <span class="text-blue-600">Super Star!</span> ✨</h2>
                     <p class="text-lg text-gray-700 mb-4">You've earned <span class="font-bold text-yellow-500">15 stars</span> today! Keep going!</p>
-                    <button class="bg-gradient-to-r from-green-400 to-blue-500 hover:from-pink-500 hover:to-yellow-500 text-white font-bold py-3 px-6 rounded-full text-lg shadow-lg transform hover:scale-105 transition duration-300 pulse-animation">
+                    <button id="mainBtn" class="bg-gradient-to-r from-green-400 to-blue-500 hover:from-pink-500 hover:to-yellow-500 text-white font-bold py-3 px-6 rounded-full text-lg shadow-lg transform hover:scale-105 transition duration-300 pulse-animation">
                         <i class="fas fa-play mr-2"></i> Continue Your Adventure
                     </button>
                 </div>
@@ -99,7 +115,7 @@
                     <div class="relative">
                         <svg class="w-32 h-32">
                             <circle class="text-gray-200" stroke-width="10" stroke="currentColor" fill="transparent" r="50" cx="60" cy="60"/>
-                            <circle class="text-green-500 progress-ring__circle" stroke-width="10" stroke-dasharray="314" stroke-dashoffset="125.6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="50" cx="60" cy="60"/>
+                            <circle id="progressCircle" class="text-green-500 progress-ring__circle" stroke-width="10" stroke-dasharray="314" stroke-dashoffset="125.6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="50" cx="60" cy="60"/>
                         </svg>
                         <div class="absolute inset-0 flex items-center justify-center flex-col">
                             <span class="text-3xl font-bold text-purple-800">60%</span>
@@ -127,7 +143,7 @@
                         </div>
                     </div>
                     <div class="md:w-1/4 flex justify-center mt-4 md:mt-0">
-                        <button class="bg-white text-purple-600 hover:bg-purple-100 font-bold py-3 px-6 rounded-full text-lg shadow-lg transform hover:scale-105 transition duration-300">
+                        <button id="dailyChallengeBtn" class="bg-white text-purple-600 hover:bg-purple-100 font-bold py-3 px-6 rounded-full text-lg shadow-lg transform hover:scale-105 transition duration-300">
                             Play Now
                         </button>
                     </div>
@@ -157,7 +173,7 @@
                                 <i class="fas fa-star-half-alt"></i>
                                 <i class="far fa-star"></i>
                             </span>
-                            <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full text-sm">
+                            <button class="game-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full text-sm" data-game="math">
                                 Play
                             </button>
                         </div>
@@ -180,7 +196,7 @@
                                 <i class="fas fa-star"></i>
                                 <i class="far fa-star"></i>
                             </span>
-                            <button class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full text-sm">
+                            <button class="game-btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full text-sm" data-game="alphabet">
                                 Play
                             </button>
                         </div>
@@ -203,7 +219,7 @@
                                 <i class="fas fa-star"></i>
                                 <i class="fas fa-star-half-alt"></i>
                             </span>
-                            <button class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-full text-sm">
+                            <button class="game-btn bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-full text-sm" data-game="shapes">
                                 Play
                             </button>
                         </div>
@@ -226,7 +242,7 @@
                                 <i class="fas fa-star"></i>
                                 <i class="fas fa-star"></i>
                             </span>
-                            <button class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full text-sm">
+                            <button class="game-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full text-sm" data-game="memory">
                                 Play
                             </button>
                         </div>
@@ -235,111 +251,47 @@
             </div>
         </section>
 
-        <!-- Progress & Rewards -->
-        <section class="mb-10">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Progress -->
-                <div class="bg-white rounded-2xl p-6 shadow-lg border-4 border-blue-200 transform hover:rotate-1 transition duration-300">
-                    <h2 class="text-2xl font-bold text-purple-800 mb-6 flex items-center">
-                        <i class="fas fa-chart-line text-blue-500 mr-3"></i> Your Progress
-                    </h2>
-                    <div class="space-y-4">
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-lg font-medium text-blue-800">Math Skills</span>
-                                <span class="text-lg font-bold text-blue-800">75%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-4">
-                                <div class="bg-blue-500 h-4 rounded-full" style="width: 75%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-lg font-medium text-green-800">Reading</span>
-                                <span class="text-lg font-bold text-green-800">60%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-4">
-                                <div class="bg-green-500 h-4 rounded-full" style="width: 60%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-lg font-medium text-purple-800">Creativity</span>
-                                <span class="text-lg font-bold text-purple-800">90%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-4">
-                                <div class="bg-purple-500 h-4 rounded-full" style="width: 90%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <!-- Game Screens (Hidden by default) -->
+        <div id="mathGame" class="game-screen">
+            <h2 class="text-4xl font-bold mb-6">Number Ninjas</h2>
+            <div class="text-2xl mb-8" id="mathQuestion">3 + 4 = ?</div>
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <button class="answer-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full text-xl" data-correct="false">6</button>
+                <button class="answer-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full text-xl" data-correct="true">7</button>
+                <button class="answer-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full text-xl" data-correct="false">5</button>
+                <button class="answer-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full text-xl" data-correct="false">8</button>
+            </div>
+            <button class="close-game bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full">
+                Close Game
+            </button>
+        </div>
 
-                <!-- Rewards -->
-                <div class="bg-white rounded-2xl p-6 shadow-lg border-4 border-yellow-200 transform hover:rotate-1 transition duration-300">
-                    <h2 class="text-2xl font-bold text-purple-800 mb-6 flex items-center">
-                        <i class="fas fa-medal text-yellow-500 mr-3"></i> Your Rewards
-                    </h2>
-                    <div class="grid grid-cols-3 gap-4">
-                        <div class="bg-yellow-100 rounded-xl p-3 flex flex-col items-center transform hover:scale-110 transition duration-300">
-                            <img src="https://cdn-icons-png.flaticon.com/512/3132/3132735.png" alt="Badge" class="h-12 w-12 mb-2">
-                            <span class="text-sm font-bold text-yellow-800">Math Whiz</span>
-                        </div>
-                        <div class="bg-blue-100 rounded-xl p-3 flex flex-col items-center transform hover:scale-110 transition duration-300">
-                            <img src="https://cdn-icons-png.flaticon.com/512/3132/3132735.png" alt="Badge" class="h-12 w-12 mb-2">
-                            <span class="text-sm font-bold text-blue-800">ABC Master</span>
-                        </div>
-                        <div class="bg-purple-100 rounded-xl p-3 flex flex-col items-center transform hover:scale-110 transition duration-300">
-                            <img src="https://cdn-icons-png.flaticon.com/512/3132/3132735.png" alt="Badge" class="h-12 w-12 mb-2">
-                            <span class="text-sm font-bold text-purple-800">Memory Champ</span>
-                        </div>
-                        <div class="bg-green-100 rounded-xl p-3 flex flex-col items-center transform hover:scale-110 transition duration-300">
-                            <img src="https://cdn-icons-png.flaticon.com/512/3132/3132735.png" alt="Badge" class="h-12 w-12 mb-2">
-                            <span class="text-sm font-bold text-green-800">Shape Expert</span>
-                        </div>
-                        <div class="bg-red-100 rounded-xl p-3 flex flex-col items-center transform hover:scale-110 transition duration-300">
-                            <img src="https://cdn-icons-png.flaticon.com/512/3132/3132735.png" alt="Badge" class="h-12 w-12 mb-2">
-                            <span class="text-sm font-bold text-red-800">Color Wizard</span>
-                        </div>
-                        <div class="bg-pink-100 rounded-xl p-3 flex flex-col items-center relative transform hover:scale-110 transition duration-300">
-                            <div class="absolute -top-2 -right-2 bg-yellow-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold">NEW</div>
-                            <img src="https://cdn-icons-png.flaticon.com/512/3132/3132735.png" alt="Badge" class="h-12 w-12 mb-2">
-                            <span class="text-sm font-bold text-pink-800">Story Star</span>
-                        </div>
-                    </div>
+        <div id="alphabetGame" class="game-screen">
+            <h2 class="text-4xl font-bold mb-6">Alphabet Safari</h2>
+            <div class="text-8xl mb-8" id="letterDisplay">A</div>
+            <div class="mb-4">
+                <button id="letterSoundBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full text-xl">
+                    <i class="fas fa-volume-up mr-2"></i> Hear Sound
+                </button>
+            </div>
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <div class="bg-white text-purple-800 p-4 rounded-xl text-center">
+                    <div class="text-2xl font-bold mb-2">Apple</div>
+                    <img src="https://cdn-icons-png.flaticon.com/512/415/415682.png" class="h-16 mx-auto">
+                </div>
+                <div class="bg-white text-purple-800 p-4 rounded-xl text-center">
+                    <div class="text-2xl font-bold mb-2">Ball</div>
+                    <img src="https://cdn-icons-png.flaticon.com/512/3081/3081840.png" class="h-16 mx-auto">
+                </div>
+                <div class="bg-white text-purple-800 p-4 rounded-xl text-center">
+                    <div class="text-2xl font-bold mb-2">Cat</div>
+                    <img src="https://cdn-icons-png.flaticon.com/512/6176/6176808.png" class="h-16 mx-auto">
                 </div>
             </div>
-        </section>
-
-        <!-- AI Helper -->
-        <section class="mb-10 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-2xl p-6 shadow-lg border-4 border-indigo-200 transform hover:-translate-y-1 transition duration-300">
-            <h2 class="text-2xl font-bold text-purple-800 mb-6 flex items-center">
-                <i class="fas fa-robot text-indigo-500 mr-3"></i> AI Learning Helper
-            </h2>
-            <div class="flex flex-col md:flex-row items-center">
-                <div class="md:w-1/4 mb-6 md:mb-0 flex justify-center">
-                    <img src="https://cdn-icons-png.flaticon.com/512/4712/4712035.png" alt="AI Helper" class="h-32 w-32 float-animation">
-                </div>
-                <div class="md:w-3/4">
-                    <div class="bg-white rounded-xl p-4 mb-4 shadow-md">
-                        <p class="text-gray-800">Hi! I'm your learning buddy. What would you like to practice today?</p>
-                    </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <button class="bg-white hover:bg-indigo-50 text-indigo-700 font-medium py-2 px-4 rounded-full border-2 border-indigo-200 transform hover:scale-105 transition duration-300">
-                            <i class="fas fa-calculator mr-2"></i> Math
-                        </button>
-                        <button class="bg-white hover:bg-indigo-50 text-indigo-700 font-medium py-2 px-4 rounded-full border-2 border-indigo-200 transform hover:scale-105 transition duration-300">
-                            <i class="fas fa-book mr-2"></i> Reading
-                        </button>
-                        <button class="bg-white hover:bg-indigo-50 text-indigo-700 font-medium py-2 px-4 rounded-full border-2 border-indigo-200 transform hover:scale-105 transition duration-300">
-                            <i class="fas fa-palette mr-2"></i> Colors
-                        </button>
-                        <button class="bg-white hover:bg-indigo-50 text-indigo-700 font-medium py-2 px-4 rounded-full border-2 border-indigo-200 transform hover:scale-105 transition duration-300">
-                            <i class="fas fa-shapes mr-2"></i> Shapes
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
+            <button class="close-game bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full">
+                Close Game
+            </button>
+        </div>
     </main>
 
     <!-- Footer -->
@@ -366,117 +318,118 @@
     </footer>
 
     <script>
-        // Simple animation for character speech bubble
-        setInterval(() => {
-            const bubble = document.querySelector('.speech-bubble');
-            const messages = [
-                "Hi there! Let's play!",
-                "You're doing great!",
-                "Learning is fun!",
-                "Try a new game today!",
-                "You're a superstar!",
-                "Wow! Look at your progress!",
-                "Ready for a challenge?",
-                "You've earned 15 stars!",
-                "Keep up the good work!"
-            ];
-            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-            bubble.textContent = randomMessage;
-            
-            // Add a little bounce effect when message changes
+        // Sound effects
+        const sounds = {
+            click: 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3',
+            correct: 'https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3',
+            wrong: 'https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3',
+            open: 'https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3',
+            letter: 'https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3'
+        };
+
+        // Play sound function
+        function playSound(type) {
+            const audio = new Audio(sounds[type]);
+            audio.play().catch(e => console.log("Sound blocked:", e));
+            return audio;
+        }
+
+        // Character speech bubble
+        const speechMessages = [
+            "Hi there! Let's play!",
+            "You're doing great!",
+            "Learning is fun!",
+            "Try a new game today!",
+            "You're a superstar!",
+            "Wow! Look at your progress!",
+            "Ready for a challenge?"
+        ];
+
+        function updateSpeech() {
+            const bubble = document.getElementById('characterSpeech');
+            const randomMsg = speechMessages[Math.floor(Math.random() * speechMessages.length)];
+            bubble.textContent = randomMsg;
             bubble.style.transform = 'scale(1.1)';
             setTimeout(() => {
                 bubble.style.transform = 'scale(1)';
             }, 300);
-        }, 5000);
+            playSound('letter');
+        }
 
-        // Game card hover effects
-        document.querySelectorAll('.game-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
-            });
-            card.addEventListener('mouseleave', function() {
-                this.style.boxShadow = '';
-            });
-            
-            // Add click effect
-            card.addEventListener('click', function() {
-                this.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    this.style.transform = 'scale(1.05)';
-                    // In a real app, this would navigate to the game
-                    alert('Loading game...');
-                }, 200);
-            });
-        });
+        setInterval(updateSpeech, 5000);
 
-        // Simple progress animation
-        window.addEventListener('load', function() {
-            const progressBars = document.querySelectorAll('.progress-ring__circle');
-            progressBars.forEach(bar => {
-                const radius = bar.r.baseVal.value;
-                const circumference = radius * 2 * Math.PI;
-                bar.style.strokeDasharray = `${circumference} ${circumference}`;
-                bar.style.strokeDashoffset = circumference;
+        // Game buttons functionality
+        document.querySelectorAll('.game-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                playSound('open');
+                const gameType = this.getAttribute('data-game');
                 
-                const offset = circumference - (60 / 100) * circumference;
-                setTimeout(() => {
-                    bar.style.strokeDashoffset = offset;
-                }, 500);
-            });
-            
-            // Animate progress bars on scroll into view
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const progress = entry.target.querySelector('.progress-ring__circle');
-                        if (progress) {
-                            const radius = progress.r.baseVal.value;
-                            const circumference = radius * 2 * Math.PI;
-                            const percent = parseInt(entry.target.querySelector('span').textContent);
-                            const offset = circumference - (percent / 100) * circumference;
-                            progress.style.strokeDashoffset = offset;
-                        }
-                    }
-                });
-            }, {threshold: 0.1});
-            
-            document.querySelectorAll('.bg-white.rounded-2xl').forEach(el => {
-                observer.observe(el);
-            });
-        });
-        
-        // Add confetti effect to main play button
-        document.querySelector('.pulse-animation').addEventListener('click', function() {
-            // Create confetti elements
-            for (let i = 0; i < 50; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti absolute w-2 h-2 rounded-full';
-                confetti.style.left = Math.random() * 100 + '%';
-                confetti.style.top = '-10px';
-                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
-                confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-                confetti.style.animation = `fall ${Math.random() * 3 + 2}s linear forwards`;
-                
-                document.body.appendChild(confetti);
-                
-                // Remove confetti after animation
-                setTimeout(() => {
-                    confetti.remove();
-                }, 5000);
-            }
-            
-            // Add CSS for confetti animation
-            const style = document.createElement('style');
-            style.innerHTML = `
-                @keyframes fall {
-                    to {
-                        transform: translateY(calc(100vh + 10px)) rotate(360deg);
-                        opacity: 0;
-                    }
+                if(gameType === 'math') {
+                    document.getElementById('mathGame').style.display = 'flex';
+                } else if(gameType === 'alphabet') {
+                    document.getElementById('alphabetGame').style.display = 'flex';
                 }
-            `;
-            document.head.appendChild(style);
+            });
+        });
+
+        // Answer buttons in math game
+        document.querySelectorAll('.answer-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const isCorrect = this.getAttribute('data-correct') === 'true';
+                if(isCorrect) {
+                    playSound('correct');
+                    this.classList.remove('bg-blue-500');
+                    this.classList.add('bg-green-500');
+                    setTimeout(() => {
+                        document.getElementById('mathGame').style.display = 'none';
+                    }, 1000);
+                } else {
+                    playSound('wrong');
+                    this.classList.remove('bg-blue-500');
+                    this.classList.add('bg-red-500');
+                }
+            });
+        });
+
+        // Letter sound button
+        document.getElementById('letterSoundBtn').addEventListener('click', function() {
+            playSound('letter');
+        });
+
+        // Close game buttons
+        document.querySelectorAll('.close-game').forEach(btn => {
+            btn.addEventListener('click', function() {
+                playSound('click');
+                document.querySelectorAll('.game-screen').forEach(screen => {
+                    screen.style.display = 'none';
+                });
+            });
+        });
+
+        // Main button
+        document.getElementById('mainBtn').addEventListener('click', function() {
+            playSound('open');
+            alert("Starting your learning adventure!");
+        });
+
+        // Daily challenge button
+        document.getElementById('dailyChallengeBtn').addEventListener('click', function() {
+            playSound('open');
+            alert("Daily challenge started! Match the animals to their letters!");
+        });
+
+        // Initialize progress circle
+        window.addEventListener('load', function() {
+            const circle = document.getElementById('progressCircle');
+            const radius = circle.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            circle.style.strokeDashoffset = circumference;
+            
+            const offset = circumference - (60 / 100) * circumference;
+            setTimeout(() => {
+                circle.style.strokeDashoffset = offset;
+            }, 500);
         });
     </script>
 </body>
