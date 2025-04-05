@@ -1,436 +1,196 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FunKids - Interactive Learning</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-        }
-        .bounce-animation { animation: bounce 2s infinite; }
-        
-        .game-card:hover {
-            transform: scale(1.05);
-            transition: transform 0.3s ease;
-        }
-        
-        .progress-ring__circle {
-            transition: stroke-dashoffset 0.5s ease;
-            transform: rotate(-90deg);
-            transform-origin: 50% 50%;
-        }
-        
-        .speech-bubble {
-            position: relative;
-            background: #ffeb3b;
-            border-radius: 20px;
-        }
-        .speech-bubble:after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 20px;
-            border-width: 10px 10px 0;
-            border-style: solid;
-            border-color: #ffeb3b transparent;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        .float-animation { animation: float 3s ease-in-out infinite; }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-        .pulse-animation { animation: pulse 2s infinite; }
-        
-        .rainbow-text {
-            background: linear-gradient(to right, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            animation: rainbow 5s linear infinite;
-            background-size: 400% 100%;
-        }
-        @keyframes rainbow {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 100% 50%; }
-        }
-        
-        /* Game screen styling */
-        .game-screen {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 100;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-    </style>
-</head>
-<body class="bg-gradient-to-b from-blue-50 to-purple-50 min-h-screen font-sans">
-    <!-- Header -->
-    <header class="bg-gradient-to-r from-purple-500 to-blue-500 p-4 shadow-lg">
-        <div class="container mx-auto flex justify-between items-center">
-            <div class="flex items-center">
-                <img src="https://cdn-icons-png.flaticon.com/512/1864/1864593.png" alt="Logo" class="h-16 w-16 mr-4 bounce-animation">
-                <h1 class="text-3xl font-bold text-white">FunKids <span class="rainbow-text">Adventure</span></h1>
-            </div>
-            <div class="relative">
-                <div id="characterSpeech" class="speech-bubble px-4 py-2 text-lg font-bold text-purple-900 absolute -top-16 right-0">
-                    Hi there! Let's play!
-                </div>
-                <img src="https://cdn-icons-png.flaticon.com/512/145/145852.png" alt="Character" class="h-16 w-16 float-animation">
-            </div>
+// 🌈 Match the Color + 🧠 Memory Match + 🐾 Animal Sound + 🚀 Adventure Quest + 🎯 Multiplayer Quiz + 📚 Storybook + 🎁 Reward Box + 📊 Parental Dashboard
+import { useState, useEffect } from 'react';
+import { getDownloadURL, ref } from 'firebase/storage';
+import { storage } from '@/lib/firebase';
+import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import { useRouter } from 'next/router';
+import Confetti from 'react-confetti';
+
+const allAnimals = {
+  lion: [
+    { part: 'head', image: 'lion_head.png' },
+    { part: 'body', image: 'lion_body.png' },
+    { part: 'legs', image: 'lion_legs.png' },
+  ],
+  elephant: [
+    { part: 'head', image: 'elephant_head.png' },
+    { part: 'body', image: 'elephant_body.png' },
+    { part: 'legs', image: 'elephant_legs.png' },
+  ],
+};
+
+const memoryCards = [
+  { id: 1, image: '/images/card_lion.png' },
+  { id: 2, image: '/images/card_lion.png' },
+  { id: 3, image: '/images/card_elephant.png' },
+  { id: 4, image: '/images/card_elephant.png' },
+];
+
+const soundMatch = [
+  { sound: 'lion_roar.mp3', answer: 'lion', image: '/images/lion.png' },
+  { sound: 'elephant_trumpet.mp3', answer: 'elephant', image: '/images/elephant.png' },
+];
+
+const colors = ['Red', 'Blue', 'Green'];
+const colorImages = {
+  Red: '/images/red_ball.png',
+  Blue: '/images/blue_ball.png',
+  Green: '/images/green_ball.png',
+};
+
+const shuffle = (array) => [...array].sort(() => Math.random() - 0.5);
+
+export default function BuildTheAnimalGame() {
+  const router = useRouter();
+  const [animalKey] = useState('lion');
+  const [quiz] = useState(allAnimals[animalKey]);
+  const [selectedParts, setSelectedParts] = useState([]);
+  const [completed, setCompleted] = useState(false);
+  const [colorTarget, setColorTarget] = useState(shuffle(colors)[0]);
+  const [colorSuccess, setColorSuccess] = useState(false);
+
+  const [cards, setCards] = useState(shuffle(memoryCards));
+  const [flipped, setFlipped] = useState([]);
+  const [matched, setMatched] = useState([]);
+
+  const [soundItem, setSoundItem] = useState(shuffle(soundMatch)[0]);
+  const [soundMatched, setSoundMatched] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+
+  const [showFireworks, setShowFireworks] = useState(false);
+
+  const checkCompletion = (newParts) => {
+    if (
+      newParts.length === quiz.length &&
+      colorSuccess &&
+      matched.length === memoryCards.length / 2 &&
+      soundMatched
+    ) {
+      setCompleted(true);
+      playSound('success.mp3');
+      setShowFireworks(true);
+      setTimeout(() => setShowFireworks(false), 5000);
+    }
+  };
+
+  const playSound = async (path) => {
+    try {
+      const soundRef = ref(storage, `sounds/${path}`);
+      const url = await getDownloadURL(soundRef);
+      const audio = new Audio(url);
+      audio.play();
+    } catch (error) {
+      console.error('Error playing sound:', error);
+    }
+  };
+
+  const handleSelect = (part) => {
+    if (!selectedParts.find((p) => p.part === part.part)) {
+      const newParts = [...selectedParts, part];
+      setSelectedParts(newParts);
+      playSound('place_part.mp3');
+      checkCompletion(newParts);
+    }
+  };
+
+  const handleColorClick = (color) => {
+    if (color === colorTarget) {
+      setColorSuccess(true);
+      playSound('correct.mp3');
+      checkCompletion(selectedParts);
+    } else {
+      playSound('wrong.mp3');
+    }
+  };
+
+  const handleCardClick = (card) => {
+    if (flipped.length === 2 || flipped.includes(card.id) || matched.includes(card.image)) return;
+    const newFlipped = [...flipped, card.id];
+    setFlipped(newFlipped);
+    if (newFlipped.length === 2) {
+      const [first, second] = newFlipped.map((id) => cards.find((c) => c.id === id));
+      if (first.image === second.image) {
+        const newMatched = [...matched, first.image];
+        setMatched(newMatched);
+        playSound('correct.mp3');
+        checkCompletion(selectedParts);
+      } else {
+        playSound('wrong.mp3');
+        setTimeout(() => setFlipped([]), 1000);
+      }
+    }
+  };
+
+  const handleSoundMatch = (answer) => {
+    if (answer === soundItem.answer) {
+      setSoundMatched(true);
+      playSound('correct.mp3');
+      checkCompletion(selectedParts);
+    } else {
+      playSound('wrong.mp3');
+    }
+  };
+
+  const resetGame = () => {
+    playSound('reset.mp3');
+    setSelectedParts([]);
+    setCompleted(false);
+    setColorSuccess(false);
+    setFlipped([]);
+    setMatched([]);
+    setCards(shuffle(memoryCards));
+    setColorTarget(shuffle(colors)[0]);
+    setSoundItem(shuffle(soundMatch)[0]);
+    setSoundMatched(false);
+    setShowHint(false);
+    setShowFireworks(false);
+  };
+
+  useEffect(() => {
+    if (completed) {
+      const stars = 5;
+      const history = {
+        game: 'multi-challenge',
+        stars,
+        date: new Date().toISOString(),
+      };
+      const storedHistory = localStorage.getItem('funkids_history');
+      const parsed = storedHistory ? JSON.parse(storedHistory) : [];
+      localStorage.setItem('funkids_history', JSON.stringify([...parsed, history]));
+    }
+  }, [completed]);
+
+  return (
+    <div className="text-center p-4">
+      {completed && <Confetti />} {/* Confetti animation */}
+      {showFireworks && (
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          <div className="absolute inset-0 animate-firework bg-yellow-300 rounded-full opacity-30"></div>
         </div>
-    </header>
+      )}
 
-    <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8">
-        <!-- Welcome Section -->
-        <section class="mb-10 bg-white rounded-3xl p-6 shadow-xl border-4 border-yellow-400 transform hover:rotate-1 transition duration-300">
-            <div class="flex flex-col md:flex-row items-center">
-                <div class="md:w-2/3">
-                    <h2 class="text-3xl font-bold text-purple-800 mb-2">Welcome Back, <span class="text-blue-600">Super Star!</span> ✨</h2>
-                    <p class="text-lg text-gray-700 mb-4">You've earned <span class="font-bold text-yellow-500">15 stars</span> today! Keep going!</p>
-                    <button id="mainBtn" class="bg-gradient-to-r from-green-400 to-blue-500 hover:from-pink-500 hover:to-yellow-500 text-white font-bold py-3 px-6 rounded-full text-lg shadow-lg transform hover:scale-105 transition duration-300 pulse-animation">
-                        <i class="fas fa-play mr-2"></i> Continue Your Adventure
-                    </button>
-                </div>
-                <div class="md:w-1/3 mt-6 md:mt-0 flex justify-center">
-                    <div class="relative">
-                        <svg class="w-32 h-32">
-                            <circle class="text-gray-200" stroke-width="10" stroke="currentColor" fill="transparent" r="50" cx="60" cy="60"/>
-                            <circle id="progressCircle" class="text-green-500 progress-ring__circle" stroke-width="10" stroke-dasharray="314" stroke-dashoffset="125.6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="50" cx="60" cy="60"/>
-                        </svg>
-                        <div class="absolute inset-0 flex items-center justify-center flex-col">
-                            <span class="text-3xl font-bold text-purple-800">60%</span>
-                            <span class="text-sm text-gray-600">Today's Goal</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+      <motion.div
+        className="text-xl font-bold mb-4"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        🧩 Complete All Challenges to Build the Animal!
+      </motion.div>
 
-        <!-- Daily Challenge -->
-        <section class="mb-10">
-            <h2 class="text-2xl font-bold text-purple-800 mb-6 flex items-center">
-                <i class="fas fa-trophy text-yellow-500 mr-3"></i> Today's Special Challenge
-            </h2>
-            <div class="bg-gradient-to-r from-pink-400 to-purple-500 rounded-2xl p-6 shadow-lg text-white transform hover:-translate-y-1 transition duration-300">
-                <div class="flex flex-col md:flex-row items-center">
-                    <div class="md:w-3/4">
-                        <h3 class="text-xl font-bold mb-2">Animal Alphabet Adventure</h3>
-                        <p class="mb-4">Match animals with their starting letters and unlock a special badge!</p>
-                        <div class="flex space-x-2 mb-4">
-                            <span class="bg-white text-purple-600 px-3 py-1 rounded-full text-sm font-bold">ABCs</span>
-                            <span class="bg-white text-purple-600 px-3 py-1 rounded-full text-sm font-bold">Animals</span>
-                            <span class="bg-white text-purple-600 px-3 py-1 rounded-full text-sm font-bold">Fun</span>
-                        </div>
-                    </div>
-                    <div class="md:w-1/4 flex justify-center mt-4 md:mt-0">
-                        <button id="dailyChallengeBtn" class="bg-white text-purple-600 hover:bg-purple-100 font-bold py-3 px-6 rounded-full text-lg shadow-lg transform hover:scale-105 transition duration-300">
-                            Play Now
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
+      {completed && (
+        <motion.div
+          className="text-green-500 text-2xl font-bold my-4"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+        >
+          🎉 You Did It!
+        </motion.div>
+      )}
 
-        <!-- Game Categories -->
-        <section class="mb-10">
-            <h2 class="text-2xl font-bold text-purple-800 mb-6 flex items-center">
-                <i class="fas fa-gamepad text-blue-500 mr-3"></i> Learning Games
-            </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Game Card 1 -->
-                <div class="game-card bg-white rounded-2xl overflow-hidden shadow-lg border-4 border-blue-300 hover:border-blue-500 transition duration-300 cursor-pointer">
-                    <div class="bg-blue-100 p-4 flex justify-center">
-                        <img src="https://cdn-icons-png.flaticon.com/512/2737/2737274.png" alt="Math Game" class="h-24 w-24">
-                    </div>
-                    <div class="p-4">
-                        <h3 class="text-xl font-bold text-blue-800 mb-2">Number Ninjas</h3>
-                        <p class="text-gray-600 mb-4">Count, add and subtract with fun ninja characters!</p>
-                        <div class="flex justify-between items-center">
-                            <span class="text-yellow-500">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star-half-alt"></i>
-                                <i class="far fa-star"></i>
-                            </span>
-                            <button class="game-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full text-sm" data-game="math">
-                                Play
-                            </button>
-                        </div>
-                    </div>
-                </div>
+      <Button onClick={resetGame} className="my-4">🔄 Play Again</Button>
 
-                <!-- Game Card 2 -->
-                <div class="game-card bg-white rounded-2xl overflow-hidden shadow-lg border-4 border-green-300 hover:border-green-500 transition duration-300 cursor-pointer">
-                    <div class="bg-green-100 p-4 flex justify-center">
-                        <img src="https://cdn-icons-png.flaticon.com/512/2737/2737309.png" alt="ABC Game" class="h-24 w-24">
-                    </div>
-                    <div class="p-4">
-                        <h3 class="text-xl font-bold text-green-800 mb-2">Alphabet Safari</h3>
-                        <p class="text-gray-600 mb-4">Learn letters with jungle animals and sounds!</p>
-                        <div class="flex justify-between items-center">
-                            <span class="text-yellow-500">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </span>
-                            <button class="game-btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full text-sm" data-game="alphabet">
-                                Play
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Game Card 3 -->
-                <div class="game-card bg-white rounded-2xl overflow-hidden shadow-lg border-4 border-purple-300 hover:border-purple-500 transition duration-300 cursor-pointer">
-                    <div class="bg-purple-100 p-4 flex justify-center">
-                        <img src="https://cdn-icons-png.flaticon.com/512/2737/2737302.png" alt="Shapes Game" class="h-24 w-24">
-                    </div>
-                    <div class="p-4">
-                        <h3 class="text-xl font-bold text-purple-800 mb-2">Shape Explorers</h3>
-                        <p class="text-gray-600 mb-4">Discover shapes in a magical world of colors!</p>
-                        <div class="flex justify-between items-center">
-                            <span class="text-yellow-500">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star-half-alt"></i>
-                            </span>
-                            <button class="game-btn bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-full text-sm" data-game="shapes">
-                                Play
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Game Card 4 -->
-                <div class="game-card bg-white rounded-2xl overflow-hidden shadow-lg border-4 border-red-300 hover:border-red-500 transition duration-300 cursor-pointer">
-                    <div class="bg-red-100 p-4 flex justify-center">
-                        <img src="https://cdn-icons-png.flaticon.com/512/2737/2737286.png" alt="Memory Game" class="h-24 w-24">
-                    </div>
-                    <div class="p-4">
-                        <h3 class="text-xl font-bold text-red-800 mb-2">Memory Match</h3>
-                        <p class="text-gray-600 mb-4">Find matching pairs and train your memory!</p>
-                        <div class="flex justify-between items-center">
-                            <span class="text-yellow-500">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </span>
-                            <button class="game-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full text-sm" data-game="memory">
-                                Play
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Game Screens (Hidden by default) -->
-        <div id="mathGame" class="game-screen">
-            <h2 class="text-4xl font-bold mb-6">Number Ninjas</h2>
-            <div class="text-2xl mb-8" id="mathQuestion">3 + 4 = ?</div>
-            <div class="grid grid-cols-2 gap-4 mb-8">
-                <button class="answer-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full text-xl" data-correct="false">6</button>
-                <button class="answer-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full text-xl" data-correct="true">7</button>
-                <button class="answer-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full text-xl" data-correct="false">5</button>
-                <button class="answer-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full text-xl" data-correct="false">8</button>
-            </div>
-            <button class="close-game bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full">
-                Close Game
-            </button>
-        </div>
-
-        <div id="alphabetGame" class="game-screen">
-            <h2 class="text-4xl font-bold mb-6">Alphabet Safari</h2>
-            <div class="text-8xl mb-8" id="letterDisplay">A</div>
-            <div class="mb-4">
-                <button id="letterSoundBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full text-xl">
-                    <i class="fas fa-volume-up mr-2"></i> Hear Sound
-                </button>
-            </div>
-            <div class="grid grid-cols-3 gap-4 mb-8">
-                <div class="bg-white text-purple-800 p-4 rounded-xl text-center">
-                    <div class="text-2xl font-bold mb-2">Apple</div>
-                    <img src="https://cdn-icons-png.flaticon.com/512/415/415682.png" class="h-16 mx-auto">
-                </div>
-                <div class="bg-white text-purple-800 p-4 rounded-xl text-center">
-                    <div class="text-2xl font-bold mb-2">Ball</div>
-                    <img src="https://cdn-icons-png.flaticon.com/512/3081/3081840.png" class="h-16 mx-auto">
-                </div>
-                <div class="bg-white text-purple-800 p-4 rounded-xl text-center">
-                    <div class="text-2xl font-bold mb-2">Cat</div>
-                    <img src="https://cdn-icons-png.flaticon.com/512/6176/6176808.png" class="h-16 mx-auto">
-                </div>
-            </div>
-            <button class="close-game bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full">
-                Close Game
-            </button>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
-        <div class="container mx-auto">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-4 md:mb-0">
-                    <h3 class="text-xl font-bold">FunKids Learning</h3>
-                    <p class="text-purple-200">Making learning fun for little explorers!</p>
-                </div>
-                <div class="flex space-x-4">
-                    <button class="bg-white text-purple-600 hover:bg-purple-100 font-bold py-2 px-4 rounded-full transform hover:scale-105 transition duration-300">
-                        <i class="fas fa-user"></i> Parent Login
-                    </button>
-                    <button class="bg-yellow-400 text-purple-800 hover:bg-yellow-300 font-bold py-2 px-4 rounded-full transform hover:scale-105 transition duration-300">
-                        <i class="fas fa-question-circle"></i> Help
-                    </button>
-                </div>
-            </div>
-            <div class="mt-6 text-center text-purple-200 text-sm">
-                <p>© 2023 FunKids Adventure. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-
-    <script>
-        // Sound effects
-        const sounds = {
-            click: 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3',
-            correct: 'https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3',
-            wrong: 'https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3',
-            open: 'https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3',
-            letter: 'https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3'
-        };
-
-        // Play sound function
-        function playSound(type) {
-            const audio = new Audio(sounds[type]);
-            audio.play().catch(e => console.log("Sound blocked:", e));
-            return audio;
-        }
-
-        // Character speech bubble
-        const speechMessages = [
-            "Hi there! Let's play!",
-            "You're doing great!",
-            "Learning is fun!",
-            "Try a new game today!",
-            "You're a superstar!",
-            "Wow! Look at your progress!",
-            "Ready for a challenge?"
-        ];
-
-        function updateSpeech() {
-            const bubble = document.getElementById('characterSpeech');
-            const randomMsg = speechMessages[Math.floor(Math.random() * speechMessages.length)];
-            bubble.textContent = randomMsg;
-            bubble.style.transform = 'scale(1.1)';
-            setTimeout(() => {
-                bubble.style.transform = 'scale(1)';
-            }, 300);
-            playSound('letter');
-        }
-
-        setInterval(updateSpeech, 5000);
-
-        // Game buttons functionality
-        document.querySelectorAll('.game-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                playSound('open');
-                const gameType = this.getAttribute('data-game');
-                
-                if(gameType === 'math') {
-                    document.getElementById('mathGame').style.display = 'flex';
-                } else if(gameType === 'alphabet') {
-                    document.getElementById('alphabetGame').style.display = 'flex';
-                }
-            });
-        });
-
-        // Answer buttons in math game
-        document.querySelectorAll('.answer-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const isCorrect = this.getAttribute('data-correct') === 'true';
-                if(isCorrect) {
-                    playSound('correct');
-                    this.classList.remove('bg-blue-500');
-                    this.classList.add('bg-green-500');
-                    setTimeout(() => {
-                        document.getElementById('mathGame').style.display = 'none';
-                    }, 1000);
-                } else {
-                    playSound('wrong');
-                    this.classList.remove('bg-blue-500');
-                    this.classList.add('bg-red-500');
-                }
-            });
-        });
-
-        // Letter sound button
-        document.getElementById('letterSoundBtn').addEventListener('click', function() {
-            playSound('letter');
-        });
-
-        // Close game buttons
-        document.querySelectorAll('.close-game').forEach(btn => {
-            btn.addEventListener('click', function() {
-                playSound('click');
-                document.querySelectorAll('.game-screen').forEach(screen => {
-                    screen.style.display = 'none';
-                });
-            });
-        });
-
-        // Main button
-        document.getElementById('mainBtn').addEventListener('click', function() {
-            playSound('open');
-            alert("Starting your learning adventure!");
-        });
-
-        // Daily challenge button
-        document.getElementById('dailyChallengeBtn').addEventListener('click', function() {
-            playSound('open');
-            alert("Daily challenge started! Match the animals to their letters!");
-        });
-
-        // Initialize progress circle
-        window.addEventListener('load', function() {
-            const circle = document.getElementById('progressCircle');
-            const radius = circle.r.baseVal.value;
-            const circumference = radius * 2 * Math.PI;
-            circle.style.strokeDasharray = `${circumference} ${circumference}`;
-            circle.style.strokeDashoffset = circumference;
-            
-            const offset = circumference - (60 / 100) * circumference;
-            setTimeout(() => {
-                circle.style.strokeDashoffset = offset;
-            }, 500);
-        });
-    </script>
-</body>
-</html>
+      {/* Additional game content rendering to be added here */}
+    </div>
+  );
+}
